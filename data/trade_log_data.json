@@ -1,0 +1,10 @@
+{
+  "project": {
+    "id": "trade-tx-001",
+    "name": "交易记录",
+    "trade_positions": [],
+    "trade_operations": [],
+    "invest": "0",
+    "earn": "0"
+  }
+}

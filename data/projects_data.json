@@ -1,0 +1,20 @@
+{
+  "projects": [
+    {
+      "id": "xau-lp-001",
+      "name": "LP 流动性",
+      "status": "进行中",
+      "chain": "",
+      "type": "LP",
+      "invest": 0,
+      "earn": 0,
+      "gas_cost": 0,
+      "wallets": [],
+      "tasks": [],
+      "links": {},
+      "lp_positions": [],
+      "lp_operations": []
+    }
+  ],
+  "tasks": []
+}

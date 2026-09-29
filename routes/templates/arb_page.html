@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>套利工作台 | Orange</title>
+<style>
+:root{--bg:#ffffff;--bg2:#ffffff;--bg3:#ebedf0;--border:#d0d7de;--text:#1f2328;--text2:#656d76;--text3:#8c959f;--green:#1a7f37;--red:#cf222e;--blue:#0969da;--yellow:#9a6700}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+a{color:var(--blue);text-decoration:none}
+.nav-bar{display:flex;gap:6px;padding:12px 24px;background:var(--bg2);border-bottom:1px solid var(--border);margin-bottom:0;flex-wrap:wrap;align-items:center}
+.nav-item{padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:12px;display:inline-block}
+.nav-item:hover{color:var(--text)}
+.nav-item.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.page-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:16px 24px;margin-bottom:20px}
+.stats-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.stat-item{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;flex:1;min-width:100px}
+.s-label{font-size:11px;color:var(--text3)}
+.s-value{font-size:22px;font-weight:700;margin:2px 0}
+.s-value.c-blue{color:var(--blue)}.s-value.c-green{color:var(--green)}.s-value.c-red{color:var(--red)}
+.section{background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:16px;overflow:hidden}
+.section-head{padding:10px 16px;font-size:13px;font-weight:600;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);display:flex;justify-content:space-between;align-items:center}
+.data-table{width:100%;border-collapse:collapse;font-size:12px}
+.data-table th{text-align:left;padding:8px 12px;background:var(--bg3);color:var(--text3);font-weight:500;border-bottom:1px solid var(--border);font-size:11px}
+.data-table td{padding:8px 12px;border-bottom:1px solid var(--border)}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:rgba(255,255,255,0.02)}
+.btn{display:inline-block;padding:5px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:12px;cursor:pointer}
+.btn:hover{color:var(--text);border-color:var(--text3)}
+.btn-primary{background:var(--green);color:#fff;border-color:var(--green)}
+.btn-primary:hover{background:#2ea043}
+.btn-success{background:rgba(35,134,54,0.2);color:#3fb950;border-color:#3fb950}
+.btn-danger{background:rgba(218,54,51,0.2);color:#f85149;border-color:#f85149}
+.btn-sm{padding:3px 8px;font-size:11px}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px}
+.form-control{width:100%;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;box-sizing:border-box}
+.form-control:focus{outline:none;border-color:var(--blue)}
+.form-row{display:flex;gap:12px;margin-bottom:12px}
+.form-row .form-group{flex:1;margin-bottom:0}
+.empty{padding:24px;text-align:center;color:var(--text3);font-size:13px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:none;align-items:center;justify-content:center}
+.modal.open{display:flex}
+.modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:95%;max-width:640px;max-height:90vh;overflow-y:auto;box-sizing:border-box}
+.modal-box.wide{max-width:860px}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;padding:0;line-height:1}
+.modal-close:hover{color:var(--text)}
+.rate-tab{padding:4px 10px;border-radius:6px;font-size:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:inline-block}
+.rate-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.rate-tab:hover:not(.active){color:var(--text)}
+.pnl-pos{color:var(--green)}.pnl-neg{color:var(--red)}
+body.theme-dark{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--green:#238636;--red:#da3633;--blue:#58a6ff;--yellow:#d29922}
+body.theme-dark .nav-bar{background:#161b22;border-color:#30363d}
+body.theme-dark .nav-item{background:#21262d;border-color:#30363d;color:#8b949e}
+body.theme-dark .nav-item:hover{color:#58a6ff}
+body.theme-dark .page-header{background:#161b22;border-color:#30363d}
+body.theme-dark .stat-item{background:#161b22;border-color:#30363d}
+body.theme-dark .section{background:#161b22;border-color:#30363d}
+body.theme-dark .section-head{background:rgba(255,255,255,0.02)}
+body.theme-dark .btn{background:#21262d;border-color:#30363d;color:#8b949e}
+body.theme-dark .btn:hover{color:#58a6ff;border-color:#58a6ff}
+body.theme-dark .btn-primary{background:#238636;color:#fff;border-color:#238636}
+body.theme-dark .form-control{background:#21262d;border-color:#30363d;color:#e6edf3}
+body.theme-dark .modal-box{background:#161b22}
+</style>
+<script>
+function toggleTheme(){var b=document.body;if(b.classList.contains("theme-dark")){b.classList.remove("theme-dark");localStorage.setItem("theme","light")}else{b.classList.add("theme-dark");localStorage.setItem("theme","dark")}}
+(function(){var t=localStorage.getItem("theme")||"light";if(t==="dark")document.body.classList.add("theme-dark")})();
+</script>
+</head>
+<body>
+<div class="nav-bar">
+  <a href="/" class="nav-item ">🏠 首页</a>
+  <a href="/?s=projects" class="nav-item ">📁 项目管理</a>
+  <a href="/dashboard" class="nav-item ">📊 资金看板</a>
+  <a href="/report/daily" class="nav-item">📋 日报</a>
+  <a href="/report/weekly" class="nav-item">📋 周报</a>
+  <a href="/daily" class="nav-item ">📰 加密日报</a>
+  <a href="/memos" class="nav-item ">💡 备忘录</a>
+  <a href="/arb" class="nav-item active">📈 套利工作台</a>
+  <span id="ts-display" style="margin-left:auto;font-size:11px;color:var(--text3);align-self:center"></span>
+  <button onclick="toggleTheme()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;color:var(--text2);margin-left:8px" title="主题切换">☀️ / 🌙 主题</button>
+</div>
+<div style="padding:20px 24px">
+
+  <!-- Page Header -->
+  <div class="page-header" style="display:block">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div style="font-size:18px;font-weight:700">📈 套利工作台</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="openHedgeModal()" class="btn btn-primary">+ 新建对冲</button>
+        <button onclick="openRateModal()" class="btn btn-success">📊 资金费率</button>
+        <button onclick="location.reload()" class="btn">🔄 刷新</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Bar (JS populated) -->
+  <div class="stats-bar" id="stats-bar"></div>
+
+  <!-- Hedges Section -->
+  <div class="section">
+    <div class="section-head">
+      📋 对冲列表
+      <span id="hedge-count" style="background:var(--blue);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:400;margin-left:6px">0</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>状态</th><th>交易所A</th><th>交易所B</th><th>交易对</th>
+            <th>方向</th><th>保证金</th><th>已实现PnL</th><th>未实现PnL</th>
+            <th>开仓时间</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="hedges-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Operations Log -->
+  <div class="section">
+    <div class="section-head">📜 操作日志</div>
+    <div style="overflow-x:auto;max-height:260px;overflow-y:auto">
+      <table class="data-table">
+        <thead><tr><th>时间</th><th>类型</th><th>ID</th><th>详情</th></tr></thead>
+        <tbody id="ops-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modals ─────────────────────────────────────────────────────────────── -->
+
+<!-- New Hedge Modal -->
+<div id="hedge-modal" class="modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-title">📊 新建对冲</div>
+      <button class="modal-close" onclick="closeHedgeModal()">&times;</button>
+    </div>
+    <form id="hedge-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>交易所 A</label>
+          <select id="h-exa" class="form-control">
+            <option value="binance">✅ Binance</option>
+            <option value="bybit">Bybit</option>
+            <option value="okx">OKX</option>
+            <option value="hyperliquid">Hyperliquid</option>
+            <option value="gate">Gate</option>
+            <option value="bitget">Bitget</option>
+            <option value="coinbase">Coinbase</option>
+            <option value="kraken">Kraken</option>
+            <option value="01exchange">01exchange</option>
+            <option value="apex">Apex</option>
+            <option value="asterdex">Asterdex</option>
+            <option value="backpack">Backpack</option>
+            <option value="dydx">dYdX</option>
+            <option value="ethereal">Ethereal</option>
+            <option value="extended">Extended</option>
+            <option value="grvt">GRVT</option>
+            <option value="hibachi">Hibachi</option>
+            <option value="hotstuff">Hotstuff</option>
+            <option value="hyena">Hyena</option>
+            <option value="lighter">Lighter</option>
+            <option value="mexc">MEXC</option>
+            <option value="nado">Nado</option>
+            <option value="pacifica">Pacifica</option>
+            <option value="paradex">Paradex</option>
+            <option value="reya">Reya</option>
+            <option value="tradexyz">TradeXYZ</option>
+            <option value="variational">Variational</option>
+            <option value="vest">Vest</option>
+            <option value="woofi">Woofi</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>交易所 B</label>
+          <select id="h-exb" class="form-control">
+            <option value="binance">Binance</option>
+            <option value="bybit">Bybit</option>
+            <option value="okx">OKX</option>
+            <option value="hyperliquid" selected>Hyperliquid</option>
+            <option value="gate">Gate</option>
+            <option value="bitget">Bitget</option>
+            <option value="coinbase">Coinbase</option>
+            <option value="kraken">Kraken</option>
+            <option value="01exchange">01exchange</option>
+            <option value="apex">Apex</option>
+            <option value="asterdex">Asterdex</option>
+            <option value="backpack">Backpack</option>
+            <option value="dydx">dYdX</option>
+            <option value="ethereal">Ethereal</option>
+            <option value="extended">Extended</option>
+            <option value="grvt">GRVT</option>
+            <option value="hibachi">Hibachi</option>
+            <option value="hotstuff">Hotstuff</option>
+            <option value="hyena">Hyena</option>
+            <option value="lighter">Lighter</option>
+            <option value="mexc">MEXC</option>
+            <option value="nado">Nado</option>
+            <option value="pacifica">Pacifica</option>
+            <option value="paradex">Paradex</option>
+            <option value="reya">Reya</option>
+            <option value="tradexyz">TradeXYZ</option>
+            <option value="variational">Variational</option>
+            <option value="vest">Vest</option>
+            <option value="woofi">Woofi</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>交易对</label>
+          <select id="h-symbol" class="form-control" required>
+            <option value="">— 先选交易所A加载 —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>开仓时间</label>
+          <input type="datetime-local" id="h-date" class="form-control">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>方向</label>
+          <select id="h-dir" class="form-control">
+            <option value="long_short">A做多 / B做空</option>
+            <option value="short_long">A做空 / B做多</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>状态</label>
+          <select id="h-status" class="form-control">
+            <option value="open">持仓中</option>
+            <option value="closed">已平仓</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>A 保证金 ($)</label>
+          <input type="number" id="h-mara" step="0.01" placeholder="0.00" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>B 保证金 ($)</label>
+          <input type="number" id="h-marb" step="0.01" placeholder="0.00" class="form-control">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>A 杠杆</label>
+          <input type="number" id="h-leva" step="1" value="1" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>B 杠杆</label>
+          <input type="number" id="h-levb" step="1" value="1" class="form-control">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>A 开仓价</label>
+          <input type="number" id="h-prica" step="0.01" placeholder="0.00" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>B 开仓价</label>
+          <input type="number" id="h-pricb" step="0.01" placeholder="0.00" class="form-control">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>A 平仓价</label>
+          <input type="number" id="h-cprica" step="0.01" placeholder="平仓时填写" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>B 平仓价</label>
+          <input type="number" id="h-cpricb" step="0.01" placeholder="平仓时填写" class="form-control">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>A 平仓余额 ($)</label>
+          <input type="number" id="h-cbala" step="0.01" placeholder="0.00" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>B 平仓余额 ($)</label>
+          <input type="number" id="h-cbalb" step="0.01" placeholder="0.00" class="form-control">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>A 手续费 ($)</label>
+          <input type="number" id="h-feea" step="0.01" value="0" class="form-control">
+          <input type="number" id="h-af0" step="0.00001" value="0" class="form-control" placeholder="累积资金费">
+        </div>
+        <div class="form-group">
+          <label>B 手续费 ($)</label>
+          <input type="number" id="h-feeb" step="0.01" value="0" class="form-control">
+          <input type="number" id="h-af1" step="0.00001" value="0" class="form-control" placeholder="累积资金费">
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+        <button type="button" onclick="closeHedgeModal()" class="btn">取消</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Funding Rates Modal -->
+<div id="rate-modal" class="modal">
+  <div class="modal-box wide">
+    <div class="modal-head">
+      <div class="modal-title">📊 资金费率表</div>
+      <button class="modal-close" onclick="closeRateModal()">&times;</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+      <input type="text" id="r-search" placeholder="搜索代币..." class="form-control" style="flex:1;min-width:120px" oninput="loadRates()">
+      <button onclick="openAddRateModal()" class="btn btn-success" style="white-space:nowrap">+ 添加费率</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+      <button onclick="setExFilter('')" class="rate-tab active" data-ex="">全部</button>
+      <button onclick="setExFilter('binance')" class="rate-tab" data-ex="binance">Binance</button>
+      <button onclick="setExFilter('bybit')" class="rate-tab" data-ex="bybit">Bybit</button>
+      <button onclick="setExFilter('okx')" class="rate-tab" data-ex="okx">OKX</button>
+      <button onclick="setExFilter('hyperliquid')" class="rate-tab" data-ex="hyperliquid">Hyperliquid</button>
+      <button onclick="setExFilter('gate')" class="rate-tab" data-ex="gate">Gate</button>
+      <button onclick="setExFilter('bitget')" class="rate-tab" data-ex="bitget">Bitget</button>
+      <button onclick="setExFilter('apex')" class="rate-tab" data-ex="apex">Apex</button>
+    </div>
+    <div id="rate-loading" style="text-align:center;color:var(--text3);padding:16px;display:none">加载中...</div>
+    <div style="overflow-x:auto">
+      <table class="data-table">
+        <thead><tr><th>代币</th><th>交易所</th><th>资金费率</th><th>操作</th></tr></thead>
+        <tbody id="rates-tbody">
+          <tr><td colspan="4" class="empty">点击上方交易所标签加载数据</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Add Rate Modal -->
+<div id="add-rate-modal" class="modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-title">➕ 添加资金费率</div>
+      <button class="modal-close" onclick="closeAddRateModal()">&times;</button>
+    </div>
+    <form id="rate-form">
+      <div class="form-group">
+        <label>交易对</label>
+        <input type="text" id="r-symbol" placeholder="如 BTC" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>交易所</label>
+        <select id="r-exchange" class="form-control">
+          <option value="binance">Binance</option>
+          <option value="bybit">Bybit</option>
+          <option value="okx">OKX</option>
+          <option value="hyperliquid">Hyperliquid</option>
+          <option value="gate">Gate</option>
+          <option value="bitget">Bitget</option>
+          <option value="coinbase">Coinbase</option>
+          <option value="kraken">Kraken</option>
+          <option value="01exchange">01exchange</option>
+          <option value="apex">Apex</option>
+          <option value="asterdex">Asterdex</option>
+          <option value="backpack">Backpack</option>
+          <option value="dydx">dYdX</option>
+          <option value="ethereal">Ethereal</option>
+          <option value="extended">Extended</option>
+          <option value="grvt">GRVT</option>
+          <option value="hibachi">Hibachi</option>
+          <option value="hotstuff">Hotstuff</option>
+          <option value="hyena">Hyena</option>
+          <option value="lighter">Lighter</option>
+          <option value="mexc">MEXC</option>
+          <option value="nado">Nado</option>
+          <option value="pacifica">Pacifica</option>
+          <option value="paradex">Paradex</option>
+          <option value="reya">Reya</option>
+          <option value="tradexyz">TradeXYZ</option>
+          <option value="variational">Variational</option>
+          <option value="vest">Vest</option>
+          <option value="woofi">Woofi</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>资金费率 (如 0.0001)</label>
+        <input type="number" id="r-rate" step="0.0001" placeholder="0.0001" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>下次资金时间</label>
+        <input type="datetime-local" id="r-next" class="form-control">
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+        <button type="button" onclick="closeAddRateModal()" class="btn">取消</button>
+        <button type="submit" class="btn btn-success">添加</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+var _symCache = {};
+var _curEx = "";
+(function(){
+  var ts = document.getElementById('ts-display');
+  if(ts) ts.textContent = new Date().toLocaleString('zh-CN',{hour12:false});
+  fetchHedges();
+  fetchOps();
+  var exa = document.getElementById('h-exa');
+  if(exa) exa.addEventListener('change',function(){ updateSym(exa.value); });
+})();
+
+function openHedgeModal(){
+  document.getElementById('hedge-modal').classList.add('open');
+  document.getElementById('h-date').value = new Date().toISOString().slice(0,16);
+  updateSym(document.getElementById('h-exa').value);
+}
+function closeHedgeModal(){ document.getElementById('hedge-modal').classList.remove('open'); }
+function openRateModal(){ document.getElementById('rate-modal').classList.add('open'); if(!_curEx) loadRates(); }
+function closeRateModal(){ document.getElementById('rate-modal').classList.remove('open'); }
+function openAddRateModal(){ document.getElementById('add-rate-modal').classList.add('open'); }
+function closeAddRateModal(){ document.getElementById('add-rate-modal').classList.remove('open'); }
+
+function renderStatsBar(s){
+  var pnlC = s.total_pnl>=0?'var(--green)':'var(--red)';
+  var unrealC = s.unreal_total>=0?'var(--green)':'var(--red)';
+  var pn = s.total_pnl>=0?'+':'-';
+  var up = s.unreal_total>=0?'+':'-';
+  document.getElementById('stats-bar').innerHTML =
+    '<div class="stat-item"><div class="s-label">未平仓</div><div class="s-value c-blue">'+s.open_count+'</div></div>'+
+    '<div class="stat-item"><div class="s-label">已平仓</div><div class="s-value">'+s.closed_count+'</div></div>'+
+    '<div class="stat-item"><div class="s-label">总保证金</div><div class="s-value" style="color:var(--yellow)">$'+s.total_margin.toLocaleString('en-US',{minimumFractionDigits:2})+'</div></div>'+
+    '<div class="stat-item"><div class="s-label">已实现PnL</div><div class="s-value" style="color:'+pnlC+'">'+pn+'$'+Math.abs(s.total_pnl).toLocaleString('en-US',{minimumFractionDigits:2})+'</div></div>'+
+    '<div class="stat-item"><div class="s-label">未实现PnL</div><div class="s-value" style="color:'+unrealC+'">'+up+'$'+Math.abs(s.unreal_total).toLocaleString('en-US',{minimumFractionDigits:2})+'</div></div>'+
+    '<div class="stat-item"><div class="s-label">胜率</div><div class="s-value c-blue">'+s.win_rate.toFixed(1)+'%</div></div>';
+}
+
+function fetchHedges(){
+  fetch('/arb/api/hedges').then(function(r){return r.json()}).then(function(d){
+    renderHedges(d.hedges||[]);
+    renderStatsBar(d.stats||{open_count:0,closed_count:0,total_margin:0,total_pnl:0,unreal_total:0,win_rate:0});
+  }).catch(function(){});
+}
+
+function renderHedges(hedges){
+  document.getElementById('hedge-count').textContent = hedges.length;
+  var tb = document.getElementById('hedges-tbody');
+  if(!hedges.length){ tb.innerHTML='<tr><td colspan="10" class="empty">暂无对冲记录</td></tr>'; return; }
+  var html='';
+  hedges.forEach(function(h){
+    var sc = h.status==='open'?'var(--green)':'var(--text2)';
+    var sl = h.status==='open'?'● 持仓中':'○ 已平仓';
+    var pc = h.total_pnl>=0?'pnl-pos':'pnl-neg';
+    var uc = h.unreal_total>=0?'pnl-pos':'pnl-neg';
+    var hp = (h.total_pnl>=0?'+':'-')+'$'+Math.abs(h.total_pnl||0).toFixed(2);
+    var hpPct = (h.pnl_pct>=0?'+':'')+h.pnl_pct+'%';
+    var tf = '$'+(h.total_funding||0).toFixed(2);
+    var hu = (h.unreal_total>=0?'+':'-')+'$'+Math.abs(h.unreal_total||0).toFixed(2);
+    var leg0 = (h.legs||[])[0]||{};
+    var leg1 = (h.legs||[])[1]||{};
+    var dir = leg0.direction==='long'?'多空':'空多';
+    html += '<tr>'+
+      '<td><span style="color:'+sc+';font-weight:600">'+sl+'</span></td>'+
+      '<td>'+_ex(leg0.exchange||'')+'</td>'+
+      '<td>'+_ex(leg1.exchange||'')+'</td>'+
+      '<td style="font-weight:600">'+h.symbol+'</td>'+
+      '<td style="color:var(--text2)">'+dir+'</td>'+
+      '<td style="color:var(--yellow)">$'+(h.total_margin||0).toFixed(2)+'</td>'+
+      '<td class="'+pc+'">'+hp+'</td>'+
+      '<td class="'+uc+'">'+hu+'</td>'+
+      '<td class="'+pc+'">'+hpPct+'</td>'+
+      '<td>'+tf+'</td>'+
+      '<td style="color:var(--text3);font-size:11px">'+h.open_date+'</td>'+
+      '<td><button onclick="closeHedge(\''+h.id+'\')" class="btn btn-sm btn-danger">平仓</button> <button onclick="editHedge(\''+h.id+'\')" class="btn btn-sm">编辑</button> <button onclick="deleteHedge(\''+h.id+'\')" class="btn btn-sm" style="color:var(--red)">删除</button></td>'+
+      '</tr>';
+  });
+  tb.innerHTML = html;
+}
+
+function _ex(ex){
+  var m={'binance':'Binance','bybit':'Bybit','okx':'OKX','hyperliquid':'Hyperliquid','gate':'Gate','bitget':'Bitget','coinbase':'Coinbase','kraken':'Kraken'};
+  return m[ex]||ex;
+}
+
+function fetchOps(){
+  fetch('/arb/api/operations').then(function(r){return r.json()}).then(function(ops){
+    var tb = document.getElementById('ops-tbody');
+    if(!ops.length){ tb.innerHTML='<tr><td colspan="4" class="empty">暂无操作记录</td></tr>'; return; }
+    var html='';
+    ops.forEach(function(o){
+      html += '<tr>'+
+        '<td style="color:var(--text3);font-size:11px">'+o.date+'</td>'+
+        '<td><span style="background:var(--bg3);color:var(--blue);padding:2px 6px;border-radius:4px;font-size:11px">'+o.type+'</span></td>'+
+        '<td style="color:var(--text3);font-size:11px">'+(o.hedge_id||'').substring(0,12)+'</td>'+
+        '<td style="font-size:12px">'+o.details+'</td></tr>';
+    });
+    tb.innerHTML = html;
+  }).catch(function(){});
+}
+
+function setExFilter(ex){
+  _curEx = ex;
+  document.querySelectorAll('.rate-tab').forEach(function(b){
+    b.classList.remove('active');
+    b.style.background=''; b.style.color=''; b.style.borderColor='';
+  });
+  var btn = document.querySelector('.rate-tab[data-ex="'+ex+'"]');
+  if(btn){ btn.classList.add('active'); btn.style.background='var(--blue)'; btn.style.color='#fff'; btn.style.borderColor='var(--blue)'; }
+  loadRates();
+}
+
+function loadRates(){
+  var q = document.getElementById('r-search') ? document.getElementById('r-search').value : '';
+  var tb = document.getElementById('rates-tbody');
+  var loading = document.getElementById('rate-loading');
+  if(!tb) return;
+  if(loading) loading.style.display='block';
+  tb.innerHTML='';
+  fetch('/arb/api/rates/filtered?exchange='+encodeURIComponent(_curEx)+'&search='+encodeURIComponent(q)+'&limit=200')
+    .then(function(r){return r.json()})
+    .then(function(d){
+      if(loading) loading.style.display='none';
+      renderRates(d.rates||[]);
+    })
+    .catch(function(){
+      if(loading) loading.style.display='none';
+      tb.innerHTML='<tr><td colspan="4" class="empty" style="color:var(--red)">加载失败</td></tr>';
+    });
+}
+
+function renderRates(rates){
+  var tb = document.getElementById('rates-tbody');
+  if(!rates||!rates.length){ tb.innerHTML='<tr><td colspan="4" class="empty">暂无数据</td></tr>'; return; }
+  var html='';
+  rates.forEach(function(r){
+    var fr = parseFloat(r.rate)||0;
+    var cls = fr>0?'pnl-neg':'pnl-pos';
+    var key = r.key||(r.exchange+'|'+r.symbol);
+    html += '<tr>'+
+      '<td style="font-weight:600">'+r.symbol+'</td>'+
+      '<td style="color:var(--text2);font-size:12px">'+r.exchange+'</td>'+
+      '<td class="'+cls+'">'+fr.toFixed(4)+'%</td>'+
+      '<td><button onclick="delRate(\''+key.replace(/'/g,"\\'")+'\')" class="btn btn-sm btn-danger">删除</button></td>'+
+      '</tr>';
+  });
+  tb.innerHTML = html;
+}
+
+function delRate(key){
+  if(!confirm('确认删除此费率?')) return;
+  fetch('/arb/api/rate/key?key='+encodeURIComponent(key),{method:'DELETE'}).then(function(){ loadRates(); });
+}
+
+function updateSym(ex){
+  var sel = document.getElementById('h-symbol');
+  if(!sel) return;
+  sel.innerHTML='<option value="">加载中...</option>';
+  if(!ex){ sel.innerHTML='<option value="">— 先选交易所A —</option>'; return; }
+  if(_symCache[ex]){ populateSym(sel,_symCache[ex]); return; }
+  fetch('/arb/api/rates/filtered?exchange='+encodeURIComponent(ex)+'&limit=500')
+    .then(function(r){return r.json()})
+    .then(function(d){
+      var syms = (d.rates||[]).map(function(x){return x.symbol}).sort();
+      _symCache[ex] = syms;
+      populateSym(sel,syms);
+    })
+    .catch(function(){ sel.innerHTML='<option value="">加载失败</option>'; });
+}
+
+function populateSym(sel,syms){
+  if(!syms||!syms.length){ sel.innerHTML='<option value="">无数据</option>'; return; }
+  var html='<option value="">— 选择交易对 —</option>';
+  syms.forEach(function(s){ html+='<option value="'+s+'">'+s+'</option>'; });
+  sel.innerHTML=html;
+}
+
+document.getElementById('hedge-form').onsubmit = function(e){
+  e.preventDefault();
+  var sym = document.getElementById('h-symbol').value;
+  if(!sym){ alert('请选择交易对'); return; }
+  var data = {
+    symbol: sym,
+    open_date: document.getElementById('h-date').value,
+    legs: [
+      {exchange:document.getElementById('h-exa').value,direction:document.getElementById('h-dir').value==='long_short'?'long':'short',margin:parseFloat(document.getElementById('h-mara').value)||0,leverage:parseInt(document.getElementById('h-leva').value)||1,entry_price:parseFloat(document.getElementById('h-prica').value)||0,fee:parseFloat(document.getElementById('h-feea').value)||0,accrued_funding:parseFloat(document.getElementById('h-af0').value)||0,close_price:parseFloat(document.getElementById('h-cprica').value)||0,close_balance:parseFloat(document.getElementById('h-cbala').value)||0,close_fee:0,status:'open'},
+      {exchange:document.getElementById('h-exb').value,direction:document.getElementById('h-dir').value==='long_short'?'short':'long',margin:parseFloat(document.getElementById('h-marb').value)||0,leverage:parseInt(document.getElementById('h-levb').value)||1,entry_price:parseFloat(document.getElementById('h-pricb').value)||0,fee:parseFloat(document.getElementById('h-feeb').value)||0,close_price:parseFloat(document.getElementById('h-cpricb').value)||0,close_balance:parseFloat(document.getElementById('h-cbalb').value)||0,close_fee:0,status:'open'}
+    ]
+  };
+  if(document.getElementById('h-status').value==='closed'){
+    data.legs[0].status='closed'; data.legs[1].status='closed';
+    data.legs[0].close_balance=parseFloat(document.getElementById('h-cbala').value)||0;
+    data.legs[1].close_balance=parseFloat(document.getElementById('h-cbalb').value)||0;
+  }
+  fetch('/arb/api/hedges',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+    .then(function(r){return r.json()})
+    .then(function(d){ if(d.id){ closeHedgeModal(); fetchHedges(); } });
+};
+
+document.getElementById('rate-form').onsubmit = function(e){
+  e.preventDefault();
+  fetch('/arb/api/rates',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    symbol:document.getElementById('r-symbol').value,
+    exchange:document.getElementById('r-exchange').value,
+    rate:parseFloat(document.getElementById('r-rate').value)||0,
+    next_funding:document.getElementById('r-next').value
+  })}).then(function(r){return r.json()}).then(function(d){
+    if(d.id||d.key){ closeAddRateModal(); loadRates(); }
+  });
+};
+
+function editHedge(id){_editId=id;fetch('/arb/api/hedge/'+id).then(function(r){return r.json()}).then(function(h){document.getElementById('edit-hedge-info').innerHTML='<div><span style="color:var(--text2)">交易对:</span> <b>'+h.symbol+'</b> <span style="color:var(--text2);margin-left:12px">保证金:</span> <b style="color:var(--yellow)">$'+h.total_margin.toFixed(2)+'</b> <span style="color:var(--text2);margin-left:12px">已实现PnL:</span> <b class="'+(h.total_pnl>=0?'pnl-pos':'pnl-neg')+'">'+((h.total_pnl>=0?'+':'-')+'$'+Math.abs(h.total_pnl||0).toFixed(2))+'</b></div>';var leg0=(h.legs||[])[0]||{};var leg1=(h.legs||[])[1]||{};document.getElementById('e-cb0').value=leg0.close_balance||'';document.getElementById('e-af0').value=leg0.accrued_funding||'0';document.getElementById('e-cp0').value=leg0.close_price||'';document.getElementById('e-cb0c').value='';document.getElementById('e-cb1').value=leg1.close_balance||'';document.getElementById('e-af1').value=leg1.accrued_funding||'0';document.getElementById('e-cp1').value=leg1.close_price||'';document.getElementById('e-cb1c').value='';document.getElementById('edit-modal').classList.add('open');});}
+function deleteHedge(id){if(!confirm('确认删除此仓位?'))return;fetch('/arb/api/hedges/'+id,{method:'DELETE'}).then(function(r){return r.json()}).then(function(){fetchHedges();});}
+function closeHedge(id){
+  if(!confirm('确认平仓?')) return;
+  fetch('/arb/api/hedge/'+id+'/close',{method:'POST'}).then(function(){ fetchHedges(); });
+}
+</script>
+<div id="edit-modal" class="modal"><div class="modal-box wide"><div class="modal-head"><div class="modal-title">✏️ 编辑仓位</div><button class="modal-close" onclick="closeEditModal()">&times;</button></div><div id="edit-hedge-info" style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px"></div><form id="edit-form"><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px"><div><div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--blue)">📌 交易所 A</div><div class="form-group"><label>A 当前余额 ($)</label><input type="number" id="e-cb0" step="0.01" class="form-control"></div><div class="form-group"><label>A 累积资金费 ($)</label><input type="number" id="e-af0" step="0.00001" class="form-control"></div><div class="form-group"><label>A 平仓价</label><input type="number" id="e-cp0" step="0.00001" class="form-control" placeholder="平仓时填写"></div><div class="form-group"><label>A 平仓余额 ($)</label><input type="number" id="e-cb0c" step="0.01" class="form-control" placeholder="平仓时填写"></div></div><div><div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--blue)">📌 交易所 B</div><div class="form-group"><label>B 当前余额 ($)</label><input type="number" id="e-cb1" step="0.01" class="form-control"></div><div class="form-group"><label>B 累积资金费 ($)</label><input type="number" id="e-af1" step="0.00001" class="form-control"></div><div class="form-group"><label>B 平仓价</label><input type="number" id="e-cp1" step="0.00001" class="form-control" placeholder="平仓时填写"></div><div class="form-group"><label>B 平仓余额 ($)</label><input type="number" id="e-cb1c" step="0.01" class="form-control" placeholder="平仓时填写"></div></div></div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><button type="button" onclick="closeEditModal()" class="btn">取消</button><button type="submit" class="btn btn-primary">保存更新</button></div></form></div></div><script>var _editId=null;function closeEditModal(){document.getElementById('edit-modal').classList.remove('open');}document.getElementById('edit-form').onsubmit=function(e){e.preventDefault();if(!_editId)return;var data={legs:[{accrued_funding:parseFloat(document.getElementById('e-af0').value)||0},{accrued_funding:parseFloat(document.getElementById('e-af1').value)||0}]};var cb0=parseFloat(document.getElementById('e-cb0').value)||0;var cb1=parseFloat(document.getElementById('e-cb1').value)||0;if(cb0)data.legs[0].close_balance=cb0;if(cb1)data.legs[1].close_balance=cb1;var cp0=parseFloat(document.getElementById('e-cp0').value)||0;var cp1=parseFloat(document.getElementById('e-cp1').value)||0;if(cp0)data.legs[0].close_price=cp0;if(cp1)data.legs[1].close_price=cp1;var cb0c=parseFloat(document.getElementById('e-cb0c').value)||0;var cb1c=parseFloat(document.getElementById('e-cb1c').value)||0;if(cb0c){data.legs[0].close_balance=cb0c;data.legs[0].status='closed';}if(cb1c){data.legs[1].close_balance=cb1c;data.legs[1].status='closed';}fetch('/arb/api/hedges/'+_editId,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(r){return r.json()}).then(function(){closeEditModal();fetchHedges();});};</script>
+</body>
+</html>

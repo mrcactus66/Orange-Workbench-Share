@@ -1,0 +1,10 @@
+{
+  "categories": [
+    {"name": "股票代币", "tokens": []},
+    {"name": "公链币", "tokens": []},
+    {"name": "MEME币", "tokens": []},
+    {"name": "DeFi币", "tokens": []},
+    {"name": "AI代币", "tokens": []},
+    {"name": "其他", "tokens": []}
+  ]
+}

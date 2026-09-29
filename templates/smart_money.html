@@ -1,0 +1,125 @@
+<link rel="stylesheet" href="/static/smart-money.css">
+
+<div class="sm-shell">
+  <header class="sm-header">
+    <div>
+      <div class="sm-eyebrow">WALLET INTELLIGENCE · LOCAL WATCHLIST</div>
+      <h1>聪明钱地址库</h1>
+      <p>集中记录值得跟踪的钱包，并按资金规模、策略类型和活跃链快速归类。</p>
+    </div>
+    <div class="sm-header-actions">
+      <span class="sm-source {{ 'online' if debank_enabled else '' }}"><i></i>{{ 'DeBank 同步可用' if debank_enabled else '本地手工记录' }}</span>
+      <button id="sm-open-add" class="btn btn-primary" type="button">＋ 登记地址</button>
+    </div>
+  </header>
+
+  {% if notice %}<div class="sm-notice {{ 'error' if notice_kind == 'error' else '' }}">{{ notice }}</div>{% endif %}
+
+  <section class="sm-summary" aria-label="地址库概览">
+    <div class="sm-stat"><span>跟踪地址</span><strong>{{ stats.total }}</strong><small>本地地址库</small></div>
+    <div class="sm-stat"><span>重点跟踪</span><strong class="accent">{{ stats.core }}</strong><small>核心观察名单</small></div>
+    <div class="sm-stat"><span>估算总资产</span><strong>${{ '{:,.0f}'.format(stats.assets) }}</strong><small>手工或 DeBank 快照</small></div>
+    <div class="sm-stat"><span>MEME 策略</span><strong>{{ stats.meme }}</strong><small>已分类地址</small></div>
+    <div class="sm-stat"><span>LP 策略</span><strong>{{ stats.lp }}</strong><small>流动性参与者</small></div>
+    <div class="sm-stat"><span>多链活跃</span><strong>{{ stats.multi_chain }}</strong><small>至少两条链</small></div>
+  </section>
+
+  <section class="sm-panel">
+    <div class="sm-toolbar">
+      <div class="sm-search-wrap">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.8-3.8"></path></svg>
+        <input id="sm-search" type="search" placeholder="搜索名称、地址、标签或备注">
+      </div>
+      <select id="sm-strategy-filter" aria-label="按策略筛选"><option value="">全部策略</option>{% for item in strategies %}<option value="{{ item }}">{{ item }}</option>{% endfor %}</select>
+      <select id="sm-chain-filter" aria-label="按活跃链筛选"><option value="">全部链</option>{% for item in chains %}<option value="{{ item }}">{{ item }}</option>{% endfor %}</select>
+      <select id="sm-priority-filter" aria-label="按跟踪级别筛选"><option value="">全部级别</option>{% for value, label in priorities %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+      <span id="sm-result-count" class="pill info"></span>
+    </div>
+
+    <div id="sm-wallet-grid" class="sm-wallet-grid">
+      {% for wallet in wallets %}
+      <article class="sm-card" data-wallet-id="{{ wallet.id }}" data-search="{{ ([wallet.name, wallet.address, wallet.note] + wallet.get('tags', []))|join(' ')|lower }}" data-strategies="{{ wallet.get('strategies', [])|join('|') }}" data-chains="{{ wallet.get('chains', [])|join('|') }}" data-priority="{{ wallet.get('priority', 'normal') }}">
+        <div class="sm-card-head">
+          <div class="sm-avatar">{{ wallet.name[:1]|upper }}</div>
+          <div class="sm-identity"><strong>{{ wallet.name }}</strong><span>{{ wallet.get('address_kind', 'EVM') }} 地址</span></div>
+          <span class="sm-priority {{ wallet.get('priority', 'normal') }}">{{ priority_labels.get(wallet.get('priority'), '普通记录') }}</span>
+          <button class="sm-icon-btn sm-edit" type="button" data-id="{{ wallet.id }}" aria-label="编辑 {{ wallet.name }}">•••</button>
+        </div>
+
+        <button class="sm-address" type="button" data-copy="{{ wallet.address }}" title="点击复制完整地址"><code>{{ wallet.address }}</code><span>复制</span></button>
+
+        <div class="sm-metrics">
+          <div><span>资产快照</span><strong>${{ '{:,.0f}'.format(wallet.get('estimated_assets', 0)|float) }}</strong></div>
+          <div><span>资金规模</span><strong>{{ capital_labels.get(wallet.get('capital_tier'), '待评估') }}</strong></div>
+          <div><span>活跃度</span><strong>{{ activity_labels.get(wallet.get('activity'), '待评估') }}</strong></div>
+        </div>
+
+        <div class="sm-classification">
+          <div class="sm-label">操作类型</div>
+          <div class="sm-chips">{% for item in wallet.get('strategies', []) %}<span class="sm-chip strategy-{{ item|lower }}">{{ item }}</span>{% else %}<span class="sm-placeholder">待分类</span>{% endfor %}</div>
+          <div class="sm-label">活跃链</div>
+          <div class="sm-chips">{% for chain in wallet.get('chains', []) %}<span class="sm-chip chain">{{ chain }}</span>{% else %}<span class="sm-placeholder">待确认</span>{% endfor %}</div>
+        </div>
+
+        {% if wallet.get('note') %}<p class="sm-note">{{ wallet.note }}</p>{% endif %}
+        {% if wallet.get('chain_balances') %}<div class="sm-balance-line">{% for item in wallet.chain_balances[:3] %}<span>{{ item.chain }} ${{ '{:,.0f}'.format(item.usd|float) }}</span>{% endfor %}</div>{% endif %}
+
+        <footer class="sm-card-foot">
+          <div class="sm-links">
+            {% if wallet.get('address_kind') == 'EVM' %}<a href="https://debank.com/profile/{{ wallet.address }}" target="_blank" rel="noopener">DeBank ↗</a>{% endif %}
+            {% for chain in wallet.get('chains', [])[:3] %}{% if explorer_urls.get(chain) %}<a href="{{ explorer_urls[chain] }}{{ wallet.address }}" target="_blank" rel="noopener">{{ chain }} ↗</a>{% endif %}{% endfor %}
+            {% if wallet.get('source_url') %}<a href="{{ wallet.source_url }}" target="_blank" rel="noopener">来源 ↗</a>{% endif %}
+            {% if debank_enabled and wallet.get('address_kind') == 'EVM' %}<form class="sm-sync-form" method="post" action="/smart-money/sync/{{ wallet.id }}"><button type="submit">同步资产</button></form>{% endif %}
+          </div>
+          <div class="sm-freshness">{{ 'DeBank · ' + wallet.last_synced_at if wallet.get('last_synced_at') else '更新于 ' + wallet.get('updated_at', '-') }}</div>
+        </footer>
+      </article>
+      {% else %}
+      <div class="sm-empty">
+        <div class="sm-empty-icon"><span></span><span></span><span></span></div>
+        <strong>还没有登记聪明钱地址</strong>
+        <p>从你认为值得长期跟踪的第一个钱包开始。</p>
+        <button class="btn btn-primary sm-empty-add" type="button">登记第一个地址</button>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+<div id="sm-backdrop" class="sm-backdrop"></div>
+<section id="sm-modal" class="sm-modal" role="dialog" aria-modal="true" aria-labelledby="sm-modal-title">
+  <div class="sm-modal-head">
+    <div><strong id="sm-modal-title">登记聪明钱地址</strong><span>保存观察依据和分类信息</span></div>
+    <button id="sm-close-modal" class="modal-close-button" type="button" aria-label="关闭">×</button>
+  </div>
+  <form id="sm-form" method="post" action="/smart-money/save">
+    <input id="sm-wallet-id" name="wallet_id" type="hidden">
+    <div class="sm-form-grid">
+      <label><span>钱包名称</span><input id="sm-name" name="name" required placeholder="例如：BSC MEME 高频账户"></label>
+      <label><span>跟踪级别</span><select id="sm-priority" name="priority">{% for value, label in priorities %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
+      <label class="wide"><span>钱包地址</span><input id="sm-address" name="address" required autocomplete="off" spellcheck="false" placeholder="0x… 或 Solana 地址"></label>
+      <label><span>估算资产（USD）</span><input id="sm-assets" name="estimated_assets" type="number" min="0" step="0.01" placeholder="可留空"></label>
+      <label><span>资金规模</span><select id="sm-capital" name="capital_tier">{% for value, label in capital_tiers %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
+      <label><span>活跃度</span><select id="sm-activity" name="activity">{% for value, label in activities %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
+      <label><span>信息来源</span><input id="sm-source-url" name="source_url" type="url" placeholder="可选，原始帖子或分析页面"></label>
+    </div>
+
+    <fieldset><legend>操作类型</legend><div class="sm-choice-grid strategies">{% for item in strategies %}<label><input type="checkbox" name="strategies" value="{{ item }}"><span>{{ item }}</span></label>{% endfor %}</div></fieldset>
+    <fieldset><legend>活跃链</legend><div class="sm-choice-grid chains">{% for item in chains %}<label><input type="checkbox" name="chains" value="{{ item }}"><span>{{ item }}</span></label>{% endfor %}</div></fieldset>
+
+    <div class="sm-form-grid lower">
+      <label class="wide"><span>标签</span><input id="sm-tags" name="tags" placeholder="逗号分隔，例如：早期买入, 低频高胜率, 重点复盘"></label>
+      <label class="wide"><span>观察笔记</span><textarea id="sm-note" name="note" rows="4" placeholder="为什么值得跟踪、常见仓位、入场特点、风险点……"></textarea></label>
+    </div>
+    <div class="sm-modal-foot">
+      <button id="sm-delete" class="btn sm-delete" type="button" hidden>删除记录</button>
+      <span class="sm-api-hint">{{ '支持手动同步 DeBank 资产快照' if debank_enabled else '可通过环境变量 DEBANK_ACCESS_KEY 启用资产同步' }}</span>
+      <button id="sm-cancel" class="btn" type="button">取消</button>
+      <button class="btn btn-primary" type="submit">保存地址</button>
+    </div>
+  </form>
+  <form id="sm-delete-form" method="post" action="/smart-money/delete"><input id="sm-delete-id" name="wallet_id" type="hidden"></form>
+</section>
+
+<script>window.SMART_MONEY_DATA={{ wallets_json|safe }};window.SMART_MONEY_DEBANK={{ 'true' if debank_enabled else 'false' }};</script>
+<script src="/static/smart-money.js"></script>

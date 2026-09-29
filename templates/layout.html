@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="/static/chart.js"></script>
+<title>Orange | 本地工作台</title>
+<style>
+:root{--bg:#f6f8fb;--bg2:#ffffff;--bg3:#f1f4f8;--border:#dce3eb;--text:#172033;--text2:#5f6b7a;--text3:#8793a4;--green:#16803c;--red:#c73737;--blue:#2563eb;--yellow:#a16207}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.45}
+a{color:var(--blue);text-decoration:none}
+.page-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:16px 24px;margin-bottom:24px}
+.page-title{font-size:18px;font-weight:700}
+.page-subtitle{font-size:12px;color:var(--text3);margin-top:4px}
+.back-btn{display:inline-block;padding:4px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:12px;margin-bottom:8px}
+.back-btn:hover{color:var(--text);border-color:var(--text3)}
+.stats-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.stat-item{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;flex:1;min-width:100px}
+.s-label{font-size:11px;color:var(--text3)}
+.s-value{font-size:22px;font-weight:700;margin:2px 0}
+.s-value.c-blue{color:var(--blue)}.s-value.c-green{color:var(--green)}.s-value.c-red{color:var(--red)}
+.s-sub{font-size:10px;color:var(--text3)}
+.section{background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:16px;overflow:hidden}
+.section-head{padding:10px 16px;font-size:13px;font-weight:600;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)}
+.section-head .badge{background:var(--blue);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:6px;font-weight:400}
+.data-table{width:100%;border-collapse:collapse;font-size:12px}
+.data-table th{text-align:left;padding:8px 12px;background:var(--bg3);color:var(--text3);font-weight:500;border-bottom:1px solid var(--border);font-size:11px}
+.data-table td{padding:8px 12px;border-bottom:1px solid var(--border)}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover{background:rgba(255,255,255,0.02)}
+.data-table tr:hover{background:rgba(255,255,255,0.03)}
+.btn{display:inline-block;padding:5px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:12px;cursor:pointer}
+.btn:hover{color:var(--text);border-color:var(--text3)}
+.btn-primary{background:#238636;color:#fff;border-color:#238636}
+.btn-primary:hover{background:#2ea043}
+.btn-sm{padding:3px 8px;font-size:11px}
+.btn-success{background:rgba(35,134,54,0.2);color:#3fb950;border-color:#3fb950}
+.btn-secondary{background:var(--bg3);color:var(--text3);border-color:var(--border)}
+.btn-danger{background:rgba(218,54,51,0.2);color:#f85149;border-color:#f85149}
+.link-tag{display:block;padding:4px 8px;background:var(--bg3);border-radius:4px;font-size:12px;color:var(--blue);word-break:break-all;overflow:hidden;text-overflow:ellipsis}
+.link-tag:hover{background:var(--border)}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px}
+.form-control{width:100%;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px}
+.form-control:focus{outline:none;border-color:var(--blue)}
+.form-row{display:flex;gap:12px;margin-bottom:12px}
+.form-row .form-group{flex:1;margin-bottom:0}
+.nav-bar{display:flex;gap:6px;padding:10px 20px;background:rgba(255,255,255,.94);border-bottom:1px solid var(--border);margin-bottom:0;position:sticky;top:0;z-index:10;overflow-x:auto;white-space:nowrap;box-shadow:0 1px 10px rgba(23,32,51,.04)}
+.nav-item{padding:6px 10px;background:transparent;border:1px solid transparent;border-radius:6px;color:var(--text2);font-size:12px;flex:0 0 auto}
+.nav-item.active{background:#e8efff;color:#1d4ed8;border-color:#cbdcff;font-weight:600}
+.nav-item:hover{color:var(--text)}
+.task-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+.task-item:last-child{border-bottom:none}
+.t-name{font-size:12px;color:var(--text)}
+.t-name.done{text-decoration:line-through;color:var(--text3)}
+.tag-chip{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px}
+.quick-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.quick-link{padding:8px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px}
+.quick-link.btn-primary{background:#238636;color:#fff;border-color:#238636}
+.empty{padding:24px;text-align:center;color:var(--text3);font-size:13px}
+.proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;padding:16px;max-height:530px;overflow-y:auto;scrollbar-width:thin}
+.proj-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s}
+.proj-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.3);border-color:var(--text3)}
+body.theme-dark{--bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--green:#238636;--red:#da3633;--blue:#58a6ff;--yellow:#d29922}
+body.theme-dark .page-header{background:#161b22;border-color:#30363d}
+body.theme-dark .nav-bar{background:#161b22;border-color:#30363d}
+body.theme-dark .nav-item{background:#21262d;border-color:#30363d;color:#8b949e}
+body.theme-dark .nav-item:hover{color:#58a6ff}
+body.theme-dark .stat-item{background:#161b22;border-color:#30363d}
+body.theme-dark .section{background:#161b22;border-color:#30363d}
+body.theme-dark .btn{background:#21262d;border-color:#30363d;color:#8b949e}
+body.theme-dark .btn:hover{color:#58a6ff;border-color:#58a6ff}
+body.theme-dark .btn-primary{background:#238636;color:#fff;border-color:#238636}
+body.theme-dark .form-control{background:#21262d;border-color:#30363d;color:#e6edf3}
+body.theme-dark .proj-card{background:#161b22;border-color:#30363d}
+body.theme-dark .proj-card:hover{border-color:#58a6ff}
+body.theme-dark .quick-link{background:#161b22;border-color:#30363d;color:#8b949e}
+body.theme-dark .link-tag{background:#161b22;color:#58a6ff}
+body.theme-dark .data-table th{background:#161b22}
+body.theme-dark .data-table td{border-color:#30363d}
+/* 统一工作台视觉：所有核心页共用 LP 的紧凑、低噪声信息层级。 */
+main{padding-bottom:32px!important}.section-projects .page-header,.section-trade-log .page-header,.section-token-contracts .page-header{background:var(--bg2)!important;border:1px solid var(--border);border-radius:13px;margin:0 0 12px!important;padding:14px 16px!important}.section-projects .stats-bar{gap:8px;margin-bottom:12px}.section-projects .stat-item{padding:10px 12px;border-radius:10px;box-shadow:none}.section-projects .s-value{font-size:19px}.section-projects .section,.section-trade-log .section,.section-token-contracts .section{border-radius:13px;box-shadow:0 5px 18px rgba(29,78,110,.035)}.section-projects .section-head,.section-trade-log .section-head,.section-token-contracts .section-head{padding:11px 14px}.section-projects .proj-grid{gap:9px;padding:12px;max-height:560px}.section-projects .proj-card{padding:12px;border-radius:10px;box-shadow:none}.section-projects .proj-card:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(29,78,110,.08)}.section-trade-log .data-table td,.section-trade-log .data-table th{padding:9px 10px}.section-token-contracts .cat-grid{gap:10px}.section-token-contracts .cat-card{border-radius:11px;box-shadow:none}.section-token-contracts .tok-item{padding:8px 10px}.section-token-contracts #quick-add-form{border-radius:12px;box-shadow:0 12px 32px rgba(29,78,110,.12)}
+body.theme-dark .section-projects .page-header,body.theme-dark .section-trade-log .page-header,body.theme-dark .section-token-contracts .page-header{background:#161b22!important;border-color:#30363d!important}body.theme-dark .section-projects .section,body.theme-dark .section-trade-log .section,body.theme-dark .section-token-contracts .section{box-shadow:none}
+</style>
+</head>
+<body class="section-{{section}}">
+<script>if(localStorage.getItem('theme')==='dark')document.body.classList.add('theme-dark')</script>
+<div class="nav-bar">
+  <a href="/projects" class="nav-item {{'active' if section=='projects' else ''}}">项目管理</a>
+  <a href="/memos" class="nav-item {{'active' if section=='memos' else ''}}">备忘录</a>
+  <a href="/lp" class="nav-item {{'active' if section=='lp' else ''}}">LP 流动性</a>
+  <a href="/trade-log" class="nav-item {{'active' if section=='trade-log' else ''}}">交易记录</a>
+  <a href="/token-contracts" class="nav-item {{'active' if section=='token-contracts' else ''}}">常用代币合约</a>
+  <a href="/smart-money" class="nav-item {{'active' if section=='smart-money' else ''}}">聪明钱地址</a>
+  <div class="nav-meta"><time>{{now|string|truncate(16, True, '')}}</time><button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" type="button" title="切换到深色主题" aria-label="切换到深色主题" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"></path></svg></button></div>
+</div>
+<main style="padding:20px 24px;max-width:1680px;margin:0 auto">
+{{content | safe}}
+<link rel="stylesheet" href="/static/worktable.css">
+<script src="/static/worktable.js"></script>
+</main>
+</body>
+</html>
